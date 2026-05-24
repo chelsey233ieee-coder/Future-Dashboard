@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Future Me">
+<title>Future Me Dashboard</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --card: #f7f8fa;
+  --card-hover: #f0f1f3;
+  --border: #e8eaed;
+  --text: #1a1a1a;
+  --text-dim: #8e8e93;
+  --accent: #8acb00;
+  --accent-dark: #5a8a00;
+  --accent-glow: rgba(138,203,0,0.12);
+  --pink: #ff6b81;
+  --orange: #ffb340;
+  --red: #ff4757;
+  --radius: 14px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  height: 100%; overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif;
+  background: var(--bg); color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+#app { height: 100%; display: flex; flex-direction: column; }
+.page { display: none; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 16px 24px; }
+.page.active { display: block; }
+.page::-webkit-scrollbar { display: none; }
+
+nav {
+  display: flex; justify-content: space-around; align-items: center;
+  padding: 6px 0 calc(6px + var(--safe-bottom));
+  background: #1a1a1a; flex-shrink: 0;
+}
+nav button {
+  background: none; border: none; color: rgba(255,255,255,0.5); font-size: 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 8px;
+  font-family: inherit; cursor: pointer; transition: color .2s;
+}
+nav button svg { width: 22px; height: 22px; }
+nav button.active { color: #fff; }
+
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 12px;
+}
+.card h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+
+.emotion-bar { display: flex; justify-content: space-around; padding: 8px 0; }
+.emotion-btn {
+  font-size: 30px; background: none; border: 2px solid transparent; border-radius: 14px;
+  padding: 8px 12px; cursor: pointer; transition: all .2s; line-height: 1;
+}
+.emotion-btn.selected { border-color: var(--accent); background: var(--accent-glow); transform: scale(1.15); }
+
+.tag-input-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--accent-glow); color: var(--accent-dark); border-radius: 20px;
+  padding: 5px 12px; font-size: 13px;
+}
+.tag .remove { cursor: pointer; font-size: 14px; line-height: 1; opacity: 0.7; }
+.tag .remove:hover { opacity: 1; }
+#tagInput {
+  background: transparent; border: none; color: var(--text); font-size: 14px;
+  outline: none; min-width: 80px; font-family: inherit;
+}
+#tagInput::placeholder { color: var(--text-dim); }
+
+input[type="text"], textarea {
+  width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); padding: 12px; font-size: 14px; font-family: inherit;
+  outline: none; resize: none; transition: border-color .2s;
+}
+input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
+textarea { min-height: 72px; line-height: 1.6; }
+
+.btn-primary {
+  background: #1a1a1a; color: #fff; border: none; border-radius: 12px;
+  padding: 14px; font-size: 15px; font-weight: 600; width: 100%; cursor: pointer;
+  font-family: inherit; transition: opacity .2s;
+}
+.btn-primary:active { opacity: 0.8; }
+.btn-ghost {
+  background: none; color: var(--text); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px 20px; font-size: 14px; cursor: pointer; font-family: inherit; transition: all .2s;
+}
+.btn-ghost:active { background: var(--card); }
+
+.greeting { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+.greeting-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; }
+.streak-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent); color: #fff; border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 600;
+  margin-bottom: 18px;
+}
+.stat-row { display: flex; gap: 10px; margin-bottom: 14px; }
+.stat-card {
+  flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; text-align: center;
+}
+.stat-card .stat-num { font-size: 28px; font-weight: 700; color: var(--accent); }
+.stat-card .stat-label { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+.page-header {
+  display: flex; align-items: center; justify-content: center;
+  position: relative; margin-bottom: 20px;
+}
+.page-header h2 { font-size: 20px; font-weight: 700; }
+.page-header .cal-toggle {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px;
+}
+.page-header .cal-toggle:active { color: var(--accent); }
+.page-header .cal-toggle svg { width: 20px; height: 20px; }
+
+.section-label { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+.section-spacing { margin-bottom: 20px; }
+
+.week-ceremony {
+  text-align: center; padding: 28px 20px; margin-bottom: 20px;
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+  position: relative;
+}
+.week-ceremony h2 { font-size: 22px; font-weight: 700; }
+.week-question { margin-bottom: 16px; }
+.week-question .q-title {
+  font-size: 15px; font-weight: 600; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.q-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 700;
+  background: var(--accent); color: #fff; flex-shrink: 0;
+}
+.kw-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.kw-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--accent-glow); color: var(--accent-dark); border-radius: 20px;
+  padding: 5px 12px; font-size: 13px;
+}
+.kw-tag .remove { cursor: pointer; opacity: 0.7; }
+.kw-tag .remove:hover { opacity: 1; }
+#kwInput {
+  background: transparent; border: none; color: var(--text); font-size: 14px;
+  outline: none; min-width: 60px; font-family: inherit;
+}
+#kwInput::placeholder { color: var(--text-dim); }
+
+.chart-container { width: 100%; overflow: hidden; margin-bottom: 14px; }
+.canvas-wrap { width: 100%; border-radius: var(--radius); overflow: hidden; background: var(--card); }
+canvas { display: block; width: 100%; }
+.word-cloud { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 10px 0; }
+.word-item { font-weight: 700; cursor: default; transition: transform .2s; }
+.word-item:nth-child(3n) { color: var(--accent); }
+.word-item:nth-child(3n+1) { color: var(--pink); }
+.word-item:nth-child(3n+2) { color: var(--orange); }
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before {
+  content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+  width: 2px; background: var(--border);
+}
+.tl-item { position: relative; margin-bottom: 20px; padding-left: 16px; }
+.tl-item::before {
+  content: ''; position: absolute; left: -20px; top: 6px;
+  width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+  border: 2px solid var(--bg);
+}
+.tl-date { font-size: 12px; color: var(--accent); margin-bottom: 4px; }
+.tl-text { font-size: 14px; line-height: 1.5; }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+.empty-state .empty-icon { font-size: 40px; margin-bottom: 10px; }
+.empty-state p { font-size: 14px; }
+
+.summary-hero {
+  text-align: center; padding: 28px 20px; margin-bottom: 20px;
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+  position: relative;
+}
+.summary-hero h2 { font-size: 22px; font-weight: 700; }
+.summary-dim { margin-bottom: 18px; }
+.summary-dim h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.summary-dim .dim-icon { font-size: 18px; }
+.summary-dim .dim-content {
+  font-size: 14px; line-height: 1.7; color: var(--text-dim);
+  padding: 12px; background: var(--card); border-radius: 10px; min-height: 40px;
+}
+.summary-dim .dim-content.has-data { color: var(--text); }
+
+.date-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
+.date-nav button {
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+  width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.date-nav .date-display { font-size: 16px; font-weight: 600; min-width: 140px; text-align: center; }
+
+.export-bar { display: flex; gap: 10px; margin-top: 20px; }
+.export-bar button { flex: 1; }
+
+.toast {
+  position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+  background: #1a1a1a; color: #fff; padding: 10px 24px; border-radius: 20px;
+  font-size: 14px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity .3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* Calendar */
+.cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.cal-nav button {
+  background: none; border: none; color: var(--text); font-size: 16px; cursor: pointer;
+  padding: 4px 8px; border-radius: 8px;
+}
+.cal-nav button:active { background: var(--card); }
+.cal-title { font-size: 15px; font-weight: 600; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cal-dn { font-size: 11px; color: var(--text-dim); padding: 4px 0; font-weight: 500; }
+.cal-cell {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 4px 0; border-radius: 8px; min-height: 38px; cursor: default;
+}
+.cal-cell.empty { pointer-events: none; }
+.cal-cell.has-entry { cursor: pointer; background: var(--accent-glow); }
+.cal-cell.has-entry:active { background: rgba(138,203,0,0.22); }
+.cal-cell.today { border: 1.5px solid var(--accent); }
+.cal-cell.selected { background: var(--accent); border-radius: 8px; }
+.cal-cell.selected .cal-num { color: #fff; }
+.cal-num { font-size: 12px; color: var(--text); line-height: 1; }
+.cal-emo { font-size: 12px; line-height: 1; margin-top: 2px; }
+
+/* Calendar popup */
+.cal-popup {
+  max-height: 0; overflow: hidden; transition: max-height .3s ease, margin .3s ease;
+  margin-bottom: 0;
+}
+.cal-popup.open {
+  max-height: 360px; margin-bottom: 16px;
+}
+
+/* Share button */
+.share-btn {
+  position: absolute; top: 20px; right: 16px;
+  background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 6px;
+}
+.share-btn:active { color: var(--accent); }
+.share-btn svg { width: 20px; height: 20px; }
+
+/* Export modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 900;
+  display: none; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg); border-radius: 20px 20px 0 0; width: 100%; max-width: 500px;
+  padding: 24px 20px calc(24px + var(--safe-bottom));
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; text-align: center; }
+.modal-field { margin-bottom: 16px; }
+.modal-field label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 6px; }
+.modal-field input[type="date"] {
+  width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); padding: 12px; font-size: 15px; font-family: inherit; outline: none;
+}
+.modal-field input[type="date"]:focus { border-color: var(--accent); }
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+.modal-btns button { flex: 1; }
+.btn-export {
+  background: var(--accent); color: #fff; border: none; border-radius: 12px;
+  padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.btn-export:active { opacity: 0.85; }
+.btn-cancel {
+  background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px; font-size: 15px; cursor: pointer; font-family: inherit;
+}
+.btn-cancel:active { background: var(--border); }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ===== Dashboard ===== -->
+<div class="page active" id="page-dash">
+  <div class="greeting" id="greeting"></div>
+  <div class="greeting-sub" id="greetingSub"></div>
+  <div class="streak-badge" id="streakBadge">🔥 连续复盘 0 天</div>
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-num" id="statDays">0</div>
+      <div class="stat-label">复盘天数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statWeeks">0</div>
+      <div class="stat-label">周复盘</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statMoments">0</div>
+      <div class="stat-label">成长时刻</div>
+    </div>
+  </div>
+  <div class="card">
+    <div id="dashCal"></div>
+  </div>
+</div>
+
+<!-- ===== Day Review ===== -->
+<div class="page" id="page-day">
+  <div class="page-header">
+    <h2>今日复盘</h2>
+    <button class="cal-toggle" onclick="toggleDayCal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    </button>
+  </div>
+  <div class="cal-popup" id="dayCalPopup">
+    <div id="dayCal"></div>
+  </div>
+  <div class="date-nav">
+    <button onclick="navDate(-1)">◀</button>
+    <div class="date-display" id="dayDateDisplay"></div>
+    <button onclick="navDate(1)">▶</button>
+  </div>
+
+  <div class="section-spacing">
+    <div class="section-label">今天过得怎么样？</div>
+    <div class="emotion-bar" id="dayEmotions">
+      <button class="emotion-btn" data-emo="🙂" onclick="pickEmotion(this)">🙂</button>
+      <button class="emotion-btn" data-emo="😐" onclick="pickEmotion(this)">😐</button>
+      <button class="emotion-btn" data-emo="😫" onclick="pickEmotion(this)">😫</button>
+      <button class="emotion-btn" data-emo="🚀" onclick="pickEmotion(this)">🚀</button>
+    </div>
+  </div>
+
+  <div class="section-spacing">
+    <div class="section-label">今天主要做了什么？</div>
+    <div class="tag-input-wrap" id="dayTagsWrap">
+      <input type="text" id="tagInput" placeholder="输入Tag后回车" onkeydown="addTag(event)">
+    </div>
+    <textarea id="dayWhat" placeholder="一句话补充"></textarea>
+  </div>
+
+  <div class="section-spacing">
+    <div class="section-label">今天学到/观察到的东西</div>
+    <textarea id="dayLearn"></textarea>
+  </div>
+
+  <div class="section-spacing">
+    <div class="section-label">卡住我的事情</div>
+    <textarea id="dayStuck"></textarea>
+  </div>
+
+  <div class="section-spacing">
+    <div class="section-label">今天收到的反馈/小成就</div>
+    <textarea id="dayWin"></textarea>
+  </div>
+
+  <button class="btn-primary" onclick="saveDay()">保存今日复盘</button>
+</div>
+
+<!-- ===== Week Review ===== -->
+<div class="page" id="page-week">
+  <div class="week-ceremony">
+    <h2>✦ 周复盘</h2>
+    <button class="share-btn cal-toggle" onclick="toggleWeekCal()" style="top:50%;transform:translateY(-50%)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    </button>
+  </div>
+  <div class="cal-popup" id="weekCalPopup">
+    <div id="weekCal"></div>
+  </div>
+  <div class="date-nav">
+    <button onclick="navWeek(-1)">◀</button>
+    <div class="date-display" id="weekDateDisplay"></div>
+    <button onclick="navWeek(1)">▶</button>
+  </div>
+
+  <div class="card">
+    <div class="week-question">
+      <div class="q-title"><span class="q-num">1</span>这周最有成就感的事情？</div>
+      <textarea id="wq1"></textarea>
+    </div>
+    <div class="week-question">
+      <div class="q-title"><span class="q-num">2</span>这周最消耗我的事情？</div>
+      <textarea id="wq2"></textarea>
+    </div>
+    <div class="week-question">
+      <div class="q-title"><span class="q-num">3</span>我开始对什么产生兴趣？</div>
+      <textarea id="wq3"></textarea>
+    </div>
+    <div class="week-question">
+      <div class="q-title"><span class="q-num">4</span>我发现自己不适合什么？</div>
+      <textarea id="wq4"></textarea>
+    </div>
+    <div class="week-question">
+      <div class="q-title"><span class="q-num">5</span>这周学到的一个"职场规律"？</div>
+      <textarea id="wq5"></textarea>
+    </div>
+    <div class="week-question">
+      <div class="q-title"><span class="q-num">6</span>下周想尝试提升的一件事？</div>
+      <textarea id="wq6"></textarea>
+    </div>
+    <div class="week-question">
+      <div class="q-title"><span class="q-num">7</span>本周高频关键词</div>
+      <div class="kw-wrap" id="kwWrap">
+        <input type="text" id="kwInput" placeholder="输入关键词后回车" onkeydown="addKW(event)">
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="saveWeek()">保存周复盘</button>
+</div>
+
+<!-- ===== Growth ===== -->
+<div class="page" id="page-growth">
+  <div class="page-header">
+    <h2>成长轨迹</h2>
+  </div>
+
+  <div class="card">
+    <h3>情绪趋势</h3>
+    <div class="canvas-wrap"><canvas id="emoChart" height="180"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h3>高频关键词云</h3>
+    <div id="wordCloud" class="word-cloud"></div>
+  </div>
+
+  <div class="card">
+    <h3>成长时刻</h3>
+    <div id="timeline" class="timeline"></div>
+  </div>
+</div>
+
+<!-- ===== Summary ===== -->
+<div class="page" id="page-summary">
+  <div class="summary-hero">
+    <h2>总结</h2>
+    <button class="share-btn" onclick="openExportModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    </button>
+  </div>
+
+  <div class="summary-dim">
+    <h3><span class="dim-icon">💪</span>我最擅长的事情</h3>
+    <div class="dim-content" id="sum1"></div>
+  </div>
+  <div class="summary-dim">
+    <h3><span class="dim-icon">🚫</span>我最不适合的工作状态</h3>
+    <div class="dim-content" id="sum2"></div>
+  </div>
+  <div class="summary-dim">
+    <h3><span class="dim-icon">✨</span>我开始对什么产生兴趣</h3>
+    <div class="dim-content" id="sum3"></div>
+  </div>
+  <div class="summary-dim">
+    <h3><span class="dim-icon">🎯</span>我理解的好工作是什么</h3>
+    <div class="dim-content" id="sum4"></div>
+  </div>
+  <div class="summary-dim">
+    <h3><span class="dim-icon">🪞</span>我对自己的新认识</h3>
+    <div class="dim-content" id="sum5"></div>
+  </div>
+  <div class="summary-dim">
+    <h3><span class="dim-icon">🧭</span>我未来想探索的方向</h3>
+    <div class="dim-content" id="sum6"></div>
+  </div>
+
+  <div class="export-bar">
+    <button class="btn-ghost" onclick="exportData()">📤 导出数据</button>
+    <button class="btn-ghost" onclick="importData()">📥 导入数据</button>
+  </div>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <div class="modal-title">导出复盘</div>
+    <div class="modal-field">
+      <label>开始日期</label>
+      <input type="date" id="exportStart">
+    </div>
+    <div class="modal-field">
+      <label>结束日期</label>
+      <input type="date" id="exportEnd">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeExportModal()">取消</button>
+      <button class="btn-export" onclick="exportPDF()">PDF</button>
+      <button class="btn-export" onclick="exportWord()">Word</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav>
+  <button class="active" onclick="switchPage('dash',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1V10"/></svg>
+    首页
+  </button>
+  <button onclick="switchPage('day',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    日复盘
+  </button>
+  <button onclick="switchPage('week',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M6 20V4M18 20v-6"/></svg>
+    周复盘
+  </button>
+  <button onclick="switchPage('growth',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    成长
+  </button>
+  <button onclick="switchPage('summary',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    总结
+  </button>
+</nav>
+
+<div class="toast" id="toast">已保存 ✓</div>
+</div>
+
+<script>
+const STORAGE_KEY = 'futureMe';
+let data = loadData();
+let currentDate = new Date();
+let currentWeekStart = getWeekStart(new Date());
+const now = new Date();
+let dashCalYear = now.getFullYear(), dashCalMonth = now.getMonth();
+let dayCalYear = now.getFullYear(), dayCalMonth = now.getMonth();
+let weekCalYear = now.getFullYear(), weekCalMonth = now.getMonth();
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { days: {}, weeks: {} }; }
+  catch { return { days: {}, weeks: {} }; }
+}
+function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function dayKey(d) { d = d || currentDate; return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function dayKeyForDate(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function weekKey(d) { d = d || currentWeekStart; return dayKeyForDate(d); }
+function getWeekStart(d) { const r = new Date(d); const day = r.getDay(); const diff = r.getDate() - day + (day===0?-6:1); r.setDate(diff); return r; }
+function fmtDate(d) { return (d.getMonth()+1)+'月'+d.getDate()+'日'; }
+function fmtWeekRange(d) { const e = new Date(d); e.setDate(e.getDate()+6); return fmtDate(d)+' — '+fmtDate(e); }
+
+// ===== Navigation =====
+function switchPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (name === 'dash') refreshDash();
+  if (name === 'day') refreshDay();
+  if (name === 'week') refreshWeek();
+  if (name === 'growth') refreshGrowth();
+  if (name === 'summary') refreshSummary();
+}
+
+function navDate(dir) {
+  currentDate.setDate(currentDate.getDate() + dir);
+  dayCalYear = currentDate.getFullYear();
+  dayCalMonth = currentDate.getMonth();
+  refreshDay();
+}
+function navWeek(dir) {
+  currentWeekStart.setDate(currentWeekStart.getDate() + dir * 7);
+  weekCalYear = currentWeekStart.getFullYear();
+  weekCalMonth = currentWeekStart.getMonth();
+  refreshWeek();
+}
+
+// ===== Calendar =====
+function renderCalendar(containerId, year, month, opts) {
+  opts = opts || {};
+  const today = new Date();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDow = (firstDay.getDay() + 6) % 7;
+  const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const selectedKey = opts.selectedKey || '';
+  const onClickFn = opts.onClickFn || '';
+
+  let html = '<div class="cal-nav">';
+  html += '<button onclick="'+opts.prevFn+'">‹</button>';
+  html += '<span class="cal-title">'+year+'年'+months[month]+'</span>';
+  html += '<button onclick="'+opts.nextFn+'">›</button>';
+  html += '</div>';
+
+  html += '<div class="cal-grid">';
+  const dayNames = ['一','二','三','四','五','六','日'];
+  dayNames.forEach(d => { html += '<div class="cal-dn">'+d+'</div>'; });
+
+  for (let i = 0; i < startDow; i++) {
+    html += '<div class="cal-cell empty"></div>';
+  }
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const key = year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const entry = data.days[key];
+    const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===d;
+    const isSelected = key === selectedKey;
+    let cls = 'cal-cell';
+    if (entry) cls += ' has-entry';
+    if (isToday) cls += ' today';
+    if (isSelected) cls += ' selected';
+    const indicator = entry ? '<span class="cal-emo">'+entry.emotion+'</span>' : '';
+    const onclick = onClickFn ? ' onclick="'+onClickFn+'(\''+key+'\')"' : '';
+    html += '<div class="'+cls+'"'+onclick+'><span class="cal-num">'+d+'</span>'+indicator+'</div>';
+  }
+  html += '</div>';
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function dashCalPrev() { dashCalMonth--; if (dashCalMonth<0) { dashCalMonth=11; dashCalYear--; } renderDashCalendar(); }
+function dashCalNext() { dashCalMonth++; if (dashCalMonth>11) { dashCalMonth=0; dashCalYear++; } renderDashCalendar(); }
+function renderDashCalendar() {
+  renderCalendar('dashCal', dashCalYear, dashCalMonth, { prevFn: 'dashCalPrev()', nextFn: 'dashCalNext()', onClickFn: 'jumpToDayFromDash' });
+}
+
+function jumpToDayFromDash(key) {
+  const parts = key.split('-');
+  currentDate = new Date(+parts[0], +parts[1]-1, +parts[2]);
+  dayCalYear = currentDate.getFullYear();
+  dayCalMonth = currentDate.getMonth();
+  // switch to day page
+  const btn = document.querySelector('nav button:nth-child(2)');
+  switchPage('day', btn);
+}
+
+// Day calendar popup
+function toggleDayCal() {
+  const popup = document.getElementById('dayCalPopup');
+  popup.classList.toggle('open');
+  if (popup.classList.contains('open')) {
+    dayCalYear = currentDate.getFullYear();
+    dayCalMonth = currentDate.getMonth();
+    renderDayCalendar();
+  }
+}
+
+function dayCalPrev() { dayCalMonth--; if (dayCalMonth<0) { dayCalMonth=11; dayCalYear--; } renderDayCalendar(); }
+function dayCalNext() { dayCalMonth++; if (dayCalMonth>11) { dayCalMonth=0; dayCalYear++; } renderDayCalendar(); }
+function renderDayCalendar() {
+  renderCalendar('dayCal', dayCalYear, dayCalMonth, { prevFn: 'dayCalPrev()', nextFn: 'dayCalNext()', selectedKey: dayKey(), onClickFn: 'jumpToDate' });
+}
+
+// Week calendar popup
+function toggleWeekCal() {
+  const popup = document.getElementById('weekCalPopup');
+  popup.classList.toggle('open');
+  if (popup.classList.contains('open')) {
+    weekCalYear = currentWeekStart.getFullYear();
+    weekCalMonth = currentWeekStart.getMonth();
+    renderWeekCalendar();
+  }
+}
+
+function weekCalPrev() { weekCalMonth--; if (weekCalMonth<0) { weekCalMonth=11; weekCalYear--; } renderWeekCalendar(); }
+function weekCalNext() { weekCalMonth++; if (weekCalMonth>11) { weekCalMonth=0; weekCalYear++; } renderWeekCalendar(); }
+function renderWeekCalendar() {
+  const today = new Date();
+  const firstDay = new Date(weekCalYear, weekCalMonth, 1);
+  const lastDay = new Date(weekCalYear, weekCalMonth + 1, 0);
+  const startDow = (firstDay.getDay() + 6) % 7;
+  const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+  let html = '<div class="cal-nav">';
+  html += '<button onclick="weekCalPrev()">‹</button>';
+  html += '<span class="cal-title">'+weekCalYear+'年'+months[weekCalMonth]+'</span>';
+  html += '<button onclick="weekCalNext()">›</button>';
+  html += '</div>';
+  html += '<div class="cal-grid">';
+  const dayNames = ['一','二','三','四','五','六','日'];
+  dayNames.forEach(d => { html += '<div class="cal-dn">'+d+'</div>'; });
+
+  for (let i = 0; i < startDow; i++) {
+    html += '<div class="cal-cell empty"></div>';
+  }
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const thisDate = new Date(weekCalYear, weekCalMonth, d);
+    const ws = getWeekStart(thisDate);
+    const key = dayKeyForDate(ws);
+    const entry = data.weeks[key];
+    const isToday = today.getFullYear()===weekCalYear && today.getMonth()===weekCalMonth && today.getDate()===d;
+    const isCurrentWeek = key === dayKeyForDate(currentWeekStart);
+    let cls = 'cal-cell';
+    if (entry) cls += ' has-entry';
+    if (isToday) cls += ' today';
+    if (isCurrentWeek) cls += ' selected';
+    const indicator = entry ? '<span class="cal-emo" style="font-size:10px">✦</span>' : '';
+    const onclick = ' onclick="jumpToWeek(\''+key+'\')"';
+    html += '<div class="'+cls+'"'+onclick+'><span class="cal-num">'+d+'</span>'+indicator+'</div>';
+  }
+
+  html += '</div>';
+  document.getElementById('weekCal').innerHTML = html;
+}
+
+// ===== Day Review =====
+let selectedEmotion = '';
+let dayTags = [];
+
+function pickEmotion(btn) {
+  document.querySelectorAll('#dayEmotions .emotion-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedEmotion = btn.dataset.emo;
+}
+
+function addTag(e) {
+  if (e.key !== 'Enter') return;
+  const input = document.getElementById('tagInput');
+  let val = input.value.trim().replace(/^#/, '');
+  if (!val || dayTags.includes(val)) { input.value = ''; return; }
+  dayTags.push(val);
+  input.value = '';
+  renderTags();
+}
+
+function removeTag(idx) {
+  dayTags.splice(idx, 1);
+  renderTags();
+}
+
+function renderTags() {
+  const wrap = document.getElementById('dayTagsWrap');
+  const input = document.getElementById('tagInput');
+  wrap.querySelectorAll('.tag').forEach(t => t.remove());
+  dayTags.forEach((t, i) => {
+    const el = document.createElement('span');
+    el.className = 'tag';
+    el.innerHTML = '#' + t + ' <span class="remove" onclick="removeTag('+i+')">×</span>';
+    wrap.insertBefore(el, input);
+  });
+}
+
+function refreshDay() {
+  document.getElementById('dayDateDisplay').textContent = fmtDate(currentDate) + ' ' + ['日','一','二','三','四','五','六'][currentDate.getDay()];
+  const key = dayKey();
+  const entry = data.days[key];
+  selectedEmotion = entry ? entry.emotion : '';
+  dayTags = entry ? [...entry.tags] : [];
+
+  document.querySelectorAll('#dayEmotions .emotion-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.emo === selectedEmotion);
+  });
+  renderTags();
+  document.getElementById('dayWhat').value = entry ? entry.what : '';
+  document.getElementById('dayLearn').value = entry ? entry.learn : '';
+  document.getElementById('dayStuck').value = entry ? entry.stuck : '';
+  document.getElementById('dayWin').value = entry ? entry.win : '';
+
+  if (document.getElementById('dayCalPopup').classList.contains('open')) {
+    renderDayCalendar();
+  }
+}
+
+function saveDay() {
+  const key = dayKey();
+  const entry = {
+    emotion: selectedEmotion,
+    tags: [...dayTags],
+    what: document.getElementById('dayWhat').value.trim(),
+    learn: document.getElementById('dayLearn').value.trim(),
+    stuck: document.getElementById('dayStuck').value.trim(),
+    win: document.getElementById('dayWin').value.trim(),
+    ts: Date.now()
+  };
+  data.days[key] = entry;
+  saveData();
+  showToast('已保存 ✓');
+  if (document.getElementById('dayCalPopup').classList.contains('open')) {
+    renderDayCalendar();
+  }
+}
+
+function jumpToDate(key) {
+  const parts = key.split('-');
+  currentDate = new Date(+parts[0], +parts[1]-1, +parts[2]);
+  dayCalYear = currentDate.getFullYear();
+  dayCalMonth = currentDate.getMonth();
+  refreshDay();
+  document.getElementById('dayCalPopup').classList.remove('open');
+  window.scrollTo(0, 0);
+}
+
+// ===== Week Review =====
+let weekKeywords = [];
+
+function addKW(e) {
+  if (e.key !== 'Enter') return;
+  const input = document.getElementById('kwInput');
+  let val = input.value.trim();
+  if (!val || weekKeywords.includes(val)) { input.value = ''; return; }
+  weekKeywords.push(val);
+  input.value = '';
+  renderKW();
+}
+
+function removeKW(idx) {
+  weekKeywords.splice(idx, 1);
+  renderKW();
+}
+
+function renderKW() {
+  const wrap = document.getElementById('kwWrap');
+  const input = document.getElementById('kwInput');
+  wrap.querySelectorAll('.kw-tag').forEach(t => t.remove());
+  weekKeywords.forEach((t, i) => {
+    const el = document.createElement('span');
+    el.className = 'kw-tag';
+    el.innerHTML = t + ' <span class="remove" onclick="removeKW('+i+')">×</span>';
+    wrap.insertBefore(el, input);
+  });
+}
+
+function refreshWeek() {
+  document.getElementById('weekDateDisplay').textContent = fmtWeekRange(currentWeekStart);
+  const key = weekKey();
+  const entry = data.weeks[key];
+  weekKeywords = entry ? [...entry.keywords] : [];
+  for (let i = 1; i <= 6; i++) {
+    document.getElementById('wq'+i).value = entry ? entry['q'+i] : '';
+  }
+  renderKW();
+
+  if (document.getElementById('weekCalPopup').classList.contains('open')) {
+    renderWeekCalendar();
+  }
+}
+
+function saveWeek() {
+  const key = weekKey();
+  const entry = { keywords: [...weekKeywords] };
+  for (let i = 1; i <= 6; i++) entry['q'+i] = document.getElementById('wq'+i).value.trim();
+  data.weeks[key] = entry;
+  saveData();
+  showToast('已保存 ✓');
+  if (document.getElementById('weekCalPopup').classList.contains('open')) {
+    renderWeekCalendar();
+  }
+}
+
+function jumpToWeek(key) {
+  const parts = key.split('-');
+  currentWeekStart = new Date(+parts[0], +parts[1]-1, +parts[2]);
+  weekCalYear = currentWeekStart.getFullYear();
+  weekCalMonth = currentWeekStart.getMonth();
+  refreshWeek();
+  document.getElementById('weekCalPopup').classList.remove('open');
+  window.scrollTo(0, 0);
+}
+
+// ===== Dashboard =====
+function refreshDash() {
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent = h < 12 ? '早上好 ☀️' : h < 18 ? '下午好 🌤' : '晚上好 🌙';
+  document.getElementById('greetingSub').textContent = fmtDate(new Date());
+
+  const dayKeys = Object.keys(data.days).sort();
+  const weekKeys = Object.keys(data.weeks).sort();
+  document.getElementById('statDays').textContent = dayKeys.length;
+  document.getElementById('statWeeks').textContent = weekKeys.length;
+
+  let moments = 0;
+  dayKeys.forEach(k => { if (data.days[k].win) moments++; });
+  document.getElementById('statMoments').textContent = moments;
+
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    if (data.days[dayKeyForDate(d)]) streak++; else break;
+  }
+  document.getElementById('streakBadge').textContent = '🔥 连续复盘 ' + streak + ' 天';
+
+  renderDashCalendar();
+}
+
+// ===== Growth =====
+function refreshGrowth() {
+  renderEmoChart();
+  renderWordCloud();
+  renderTimeline();
+}
+
+function renderEmoChart() {
+  const canvas = document.getElementById('emoChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 180 * dpr;
+  canvas.style.height = '180px';
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 180;
+
+  const emoMap = { '🙂': 2, '😐': 1, '😫': 0, '🚀': 3 };
+  const emoLabels = ['😫', '😐', '🙂', '🚀'];
+  const emoColors = ['#ff4757', '#ffb340', '#8acb00', '#2ed573'];
+  const keys = Object.keys(data.days).sort().slice(-30);
+  const points = keys.map(k => ({ date: k.slice(5), val: emoMap[data.days[k].emotion] ?? null, emo: data.days[k].emotion }));
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 3; i++) {
+    const y = 20 + (H - 50) * (1 - i / 3);
+    ctx.beginPath(); ctx.moveTo(30, y); ctx.lineTo(W, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.font = '11px sans-serif';
+    ctx.fillText(emoLabels[i], 2, y + 4);
+  }
+
+  if (points.length < 2) {
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('记录两天以上才会出现趋势图', W/2, H/2);
+    ctx.textAlign = 'start';
+    return;
+  }
+
+  const pad = 40, gap = (W - pad) / (points.length - 1);
+  const validPoints = points.filter(p => p.val !== null);
+  if (validPoints.length < 2) return;
+
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(138,203,0,0.5)';
+  ctx.lineWidth = 2;
+  let first = true;
+  points.forEach((p, i) => {
+    if (p.val === null) return;
+    const x = pad + i * gap;
+    const y = 20 + (H - 50) * (1 - p.val / 3);
+    if (first) { ctx.moveTo(x, y); first = false; } else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  points.forEach((p, i) => {
+    if (p.val === null) return;
+    const x = pad + i * gap;
+    const y = 20 + (H - 50) * (1 - p.val / 3);
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = emoColors[p.val];
+    ctx.fill();
+  });
+}
+
+function renderWordCloud() {
+  const cont = document.getElementById('wordCloud');
+  const freq = {};
+  Object.values(data.days).forEach(e => e.tags.forEach(t => { freq[t] = (freq[t]||0) + 1; }));
+  Object.values(data.weeks).forEach(e => e.keywords.forEach(t => { freq[t] = (freq[t]||0) + 1; }));
+
+  const sorted = Object.entries(freq).sort((a,b) => b[1]-a[1]);
+  if (!sorted.length) { cont.innerHTML = '<div class="empty-state"><p>积累更多复盘后会出现关键词</p></div>'; return; }
+
+  const maxFreq = sorted[0][1];
+  cont.innerHTML = sorted.slice(0, 30).map(([w, f]) => {
+    const size = 14 + Math.round((f / maxFreq) * 22);
+    return '<span class="word-item" style="font-size:'+size+'px">'+w+'</span>';
+  }).join('');
+}
+
+function renderTimeline() {
+  const cont = document.getElementById('timeline');
+  const moments = [];
+  Object.entries(data.days).forEach(([k, e]) => {
+    if (e.win) moments.push({ date: k, text: e.win });
+    if (e.learn) moments.push({ date: k, text: e.learn });
+  });
+  moments.sort((a,b) => b.date.localeCompare(a.date));
+
+  if (!moments.length) { cont.innerHTML = '<div class="empty-state"><p>记录反馈和学习后会出现成长时刻</p></div>'; return; }
+
+  cont.innerHTML = moments.slice(0, 20).map(m =>
+    '<div class="tl-item"><div class="tl-date">'+m.date+'</div><div class="tl-text">'+m.text+'</div></div>'
+  ).join('');
+}
+
+// ===== Summary =====
+function refreshSummary() {
+  const dims = [
+    { id: 'sum1', sources: ['win'] },
+    { id: 'sum2', sources: ['stuck'] },
+    { id: 'sum3', sources: ['q3'] },
+    { id: 'sum4', sources: ['q5'] },
+    { id: 'sum5', sources: ['learn', 'q4'] },
+    { id: 'sum6', sources: ['q6'] },
+  ];
+
+  dims.forEach(d => {
+    let texts = [];
+    d.sources.forEach(s => {
+      if (['q3','q4','q5','q6'].includes(s)) {
+        Object.values(data.weeks).forEach(w => { if (w[s]) texts.push(w[s]); });
+      } else {
+        Object.values(data.days).forEach(e => { if (e[s]) texts.push(e[s]); });
+      }
+    });
+    const el = document.getElementById(d.id);
+    if (texts.length) {
+      el.textContent = texts.join('\n\n');
+      el.classList.add('has-data');
+    } else {
+      el.textContent = '积累更多复盘后会自动生成…';
+      el.classList.remove('has-data');
+    }
+  });
+}
+
+// ===== Export Modal =====
+function openExportModal() {
+  const today = new Date();
+  const threeMonthsAgo = new Date(today);
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  document.getElementById('exportEnd').value = dayKey(today);
+  document.getElementById('exportStart').value = dayKey(threeMonthsAgo);
+  document.getElementById('exportModal').classList.add('show');
+}
+
+function closeExportModal() {
+  document.getElementById('exportModal').classList.remove('show');
+}
+
+document.getElementById('exportModal').addEventListener('click', function(e) {
+  if (e.target === this) closeExportModal();
+});
+
+function generateExportContent(start, end) {
+  let html = '';
+  html += '<h1 style="font-size:22px;margin-bottom:6px;">Future Me 复盘导出</h1>';
+  html += '<p style="color:#888;margin-bottom:24px;font-size:14px;">'+start+' 至 '+end+'</p>';
+
+  const dayKeys = Object.keys(data.days).filter(k => k >= start && k <= end).sort();
+  if (dayKeys.length) {
+    html += '<h2 style="font-size:16px;margin-bottom:14px;border-bottom:2px solid #8acb00;padding-bottom:4px;">日复盘</h2>';
+    dayKeys.forEach(k => {
+      const e = data.days[k];
+      html += '<div style="margin-bottom:16px;padding:12px;background:#f7f8fa;border-radius:8px;">';
+      html += '<div style="font-weight:600;margin-bottom:4px;">'+k+' '+e.emotion+'</div>';
+      if (e.tags.length) html += '<div style="color:#5a8a00;margin-bottom:4px;font-size:13px;">'+e.tags.map(t=>'#'+t).join(' ')+'</div>';
+      if (e.what) html += '<div style="margin-bottom:3px;font-size:14px;"><b>做了什么：</b>'+e.what+'</div>';
+      if (e.learn) html += '<div style="margin-bottom:3px;font-size:14px;"><b>学到/观察到：</b>'+e.learn+'</div>';
+      if (e.stuck) html += '<div style="margin-bottom:3px;font-size:14px;"><b>卡住我的：</b>'+e.stuck+'</div>';
+      if (e.win) html += '<div style="font-size:14px;"><b>反馈/成就：</b>'+e.win+'</div>';
+      html += '</div>';
+    });
+  }
+
+  const weekKeys = Object.keys(data.weeks).filter(k => k >= start && k <= end).sort();
+  if (weekKeys.length) {
+    html += '<h2 style="font-size:16px;margin:24px 0 14px;border-bottom:2px solid #8acb00;padding-bottom:4px;">周复盘</h2>';
+    weekKeys.forEach(k => {
+      const e = data.weeks[k];
+      const ws = new Date(k);
+      html += '<div style="margin-bottom:16px;padding:12px;background:#f7f8fa;border-radius:8px;">';
+      html += '<div style="font-weight:600;margin-bottom:4px;">'+fmtWeekRange(ws)+'</div>';
+      if (e.keywords.length) html += '<div style="color:#5a8a00;margin-bottom:4px;font-size:13px;">'+e.keywords.join(' · ')+'</div>';
+      if (e.q1) html += '<div style="margin-bottom:3px;font-size:14px;"><b>最有成就感：</b>'+e.q1+'</div>';
+      if (e.q2) html += '<div style="margin-bottom:3px;font-size:14px;"><b>最消耗我：</b>'+e.q2+'</div>';
+      if (e.q3) html += '<div style="margin-bottom:3px;font-size:14px;"><b>产生兴趣：</b>'+e.q3+'</div>';
+      if (e.q4) html += '<div style="margin-bottom:3px;font-size:14px;"><b>不适合的：</b>'+e.q4+'</div>';
+      if (e.q5) html += '<div style="margin-bottom:3px;font-size:14px;"><b>职场规律：</b>'+e.q5+'</div>';
+      if (e.q6) html += '<div style="font-size:14px;"><b>下周提升：</b>'+e.q6+'</div>';
+      html += '</div>';
+    });
+  }
+
+  if (!dayKeys.length && !weekKeys.length) {
+    html += '<p style="color:#888;text-align:center;padding:40px 0;">该日期范围内没有复盘记录</p>';
+  }
+
+  return html;
+}
+
+function exportPDF() {
+  const start = document.getElementById('exportStart').value;
+  const end = document.getElementById('exportEnd').value;
+  if (!start || !end) { showToast('请选择日期范围'); return; }
+
+  const content = generateExportContent(start, end);
+  const fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Future Me 复盘导出</title>'+
+    '<style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#1a1a1a;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'+
+    '@media print{body{padding:0;}}</style></head><body>'+content+'</body></html>';
+
+  const win = window.open('', '_blank');
+  win.document.write(fullHtml);
+  win.document.close();
+  setTimeout(function() { win.print(); }, 300);
+  closeExportModal();
+}
+
+function exportWord() {
+  const start = document.getElementById('exportStart').value;
+  const end = document.getElementById('exportEnd').value;
+  if (!start || !end) { showToast('请选择日期范围'); return; }
+
+  const content = generateExportContent(start, end);
+  const fullHtml = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'+
+    '<head><meta charset="UTF-8"><style>body{font-family:-apple-system,"PingFang SC",sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#1a1a1a;}</style></head>'+
+    '<body>'+content+'</body></html>';
+
+  const blob = new Blob(['﻿' + fullHtml], { type: 'application/msword' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'future-me-'+start+'-to-'+end+'.doc';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  closeExportModal();
+  showToast('已导出 ✓');
+}
+
+// ===== JSON Export / Import =====
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'future-me-' + dayKey() + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('已导出 ✓');
+}
+
+function importData() {
+  document.getElementById('importFile').click();
+}
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (imported.days || imported.weeks) {
+        if (!confirm('导入会覆盖现有数据，确认吗？')) return;
+        data = imported;
+        saveData();
+        showToast('已导入 ✓');
+        refreshSummary();
+      }
+    } catch { showToast('导入失败，文件格式错误'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// ===== Init =====
+refreshDash();
+refreshDay();
+refreshWeek();
+</script>
+</body>
+</html>
